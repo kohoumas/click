@@ -39,7 +39,7 @@ sub usage() {
 
 sub mac_addr_from_dev($) {
   my $device = $_[0];
-  my $output = `ifconfig $device 2>&1`;
+  my $output = `/sbin/ifconfig $device 2>&1`;
   if ($output =~ /^$device: error/) {
     return "";
   }
@@ -60,7 +60,7 @@ sub mac_addr_from_id($) {
 
 sub get_node_id_from_ip($){
   my $nodeip = $_[0];
-  my $output = `ifconfig $nodeip 2>&1`;
+  my $output = `/sbin/ifconfig $nodeip 2>&1`;
   if ($output =~ /^$nodeip: error/) {
     return "";
   }
@@ -270,15 +270,15 @@ if (! $ns and $mon) {
     #system "modprobe ath5k > /dev/null 2>&1";
     #system "modprobe ath9k > /dev/null 2>&1";
 
-    system "iw dev $dev del";
-    system "iw dev $dev_base interface add $dev type monitor";
-    system "ifconfig $dev_base down";
-    system "ifconfig $dev mtu 1800";
-    #system "ifconfig $dev txqueuelen 1000"; #default is 1000
-    system "ifconfig $dev up";
-    system "iw dev $dev set channel $channel";
-    system "iwconfig $dev txpower $power";
-    system "iw reg set XX  > /dev/null 2>&1" ;
+    system "/sbin/iw dev $dev del";
+    system "/sbin/iw dev $dev_base interface add $dev type monitor";
+    system "/sbin/ifconfig $dev_base down";
+    system "/sbin/ifconfig $dev mtu 1800";
+    #system "/sbin/ifconfig $dev txqueuelen 1000"; #default is 1000
+    system "/sbin/ifconfig $dev up";
+    system "/sbin/iw dev $dev set channel $channel";
+    system "/sbin/iwconfig $dev txpower $power";
+    system "/sbin/iw reg set XX  > /dev/null 2>&1" ;
   }
   elsif (0) { # madwifi
     #system "modprobe ath_pci > /dev/null 2>&1";
@@ -290,17 +290,17 @@ if (! $ns and $mon) {
     system "sysctl -w dev.$dev_base.rawdev=1 > /dev/null 2>&1";      #create interface athXraw
 
     # Configs for athX & athXraw
-    system "iwconfig $dev_base channel $channel";
-    system "iwconfig $dev txpower $power";
+    system "/sbin/iwconfig $dev_base channel $channel";
+    system "/sbin/iwconfig $dev txpower $power";
     # The follow 3 commands are useless because don't apply to athXraw...
     #system "sysctl -w dev.$dev.diversity=0 > /dev/null 2>&1";   #disables diversity (uses only the one existing antenna 1)
     #system "sysctl -w dev.$dev.rxantenna=1 > /dev/null 2>&1";   #uses antenna 1 for rx (the connector for antenna 2 is unconnected)
     #system "sysctl -w dev.$dev.txantenna=1 > /dev/null 2>&1";   #uses antenna 1 for tx (the connector for antenna 2 is unconnected)
 
-    system "ifconfig $dev mtu 1800";
-    #system "ifconfig $dev txqueuelen 1000"; #default is 1000
-    system "ifconfig $dev up";
-    system "ifconfig $dev_base down";
+    system "/sbin/ifconfig $dev mtu 1800";
+    #system "/sbin/ifconfig $dev txqueuelen 1000"; #default is 1000
+    system "/sbin/ifconfig $dev up";
+    system "/sbin/ifconfig $dev_base down";
   }
 }
 
@@ -421,10 +421,20 @@ srcr [1] -> route_tee; // ett_stats
 srcr [2] -> data_q; // data packets to go out
 EOF
 if ($timerecords) {
-  print "srcr [3] -> StoreUDPTimeSeqRecord(OFFSET 0, DELTA true) -> [1]data_q[1] -> srcr_host; // data to me\n";
+  if ($bp) {
+    print "srcr [3] -> StoreUDPTimeSeqRecord(OFFSET 0, DELTA true) -> [1]data_q[1] -> srcr_host; // data to me\n";
+  }
+  else {
+    print "srcr [3] -> StoreUDPTimeSeqRecord(OFFSET 0, DELTA true) -> srcr_host; // data to me\n";
+  }
 }
 else {
-  print "srcr [3] -> [1]data_q[1] -> srcr_host; // data to me\n";
+  if ($bp) {
+    print "srcr [3] -> [1]data_q[1] -> srcr_host; // data to me\n";
+  }
+  else {
+    print "srcr [3] -> srcr_host; // data to me\n";
+  }
 }
 if ($bp) {
   print "srcr [4] -> route_tee; // bp_stats\n";
